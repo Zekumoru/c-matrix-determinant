@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@
 
 typedef struct Matrix
 {
-  int **elements;
+  double **elements;
   size_t row;
   size_t col;
 } Matrix;
@@ -17,16 +18,69 @@ void printMatrix(Matrix *matrix);
 void freeMatrix(Matrix *matrix);
 
 void swapRowsMatrix(Matrix *matrix, int row1, int row2);
+void rowEchelonMatrix(Matrix *matrix);
+double determinantMatrix(Matrix *matrix);
 
 int main()
 {
 
   Matrix *matrix = createMatrix(4, 4);
   loadMatrix(matrix, "0, 1, 2, 3\n2, 2, 3, 4\n3, 4, 2, 4\n5, 1, 0, 3");
-  swapRowsMatrix(matrix, 0, 1);
   printMatrix(matrix);
+  double determinant = determinantMatrix(matrix);
+  printf("Determinant: %.2lf\n", determinant);
   freeMatrix(matrix);
   return 0;
+}
+
+double determinantMatrix(Matrix *matrix)
+{
+  if (matrix->row != matrix->col)
+    return NAN;
+
+  rowEchelonMatrix(matrix);
+  double determinant = 1;
+  for (int i = 0; i < matrix->row; i++)
+    determinant *= matrix->elements[i][i];
+  return determinant;
+}
+
+void rowEchelonMatrix(Matrix *matrix)
+{
+  if (matrix->row != matrix->col)
+    return;
+
+  for (int col = 0; col < matrix->col; col++)
+  {
+    // check top-left if not 0
+    // if 0 then find not 0 then swap
+    for (int row = col; row < matrix->row; row++)
+    {
+      if (row == col && matrix->elements[row][col] != 0)
+        break;
+      if (row == col)
+        row++;
+
+      if (matrix->elements[row][col] != 0)
+      {
+        swapRowsMatrix(matrix, col, row);
+        break;
+      }
+    }
+
+    // perform Gaussian elimination
+    for (int row = col + 1; row < matrix->row; row++)
+    {
+      // already zero
+      if (matrix->elements[row][col] == 0)
+        continue;
+
+      // not zero so do the elimination
+      double term = -(matrix->elements[row][col] / matrix->elements[col][col]);
+      for (int i = 0; i < matrix->col; i++)
+        matrix->elements[row][i] += term * matrix->elements[col][i];
+    }
+  }
 }
 
 void swapRowsMatrix(Matrix *matrix, int row1, int row2)
@@ -39,7 +93,7 @@ void swapRowsMatrix(Matrix *matrix, int row1, int row2)
   bool toNegate = (row1 - row2) % 2 != 0;
   for (int i = 0; i < matrix->col; i++)
   {
-    int temp = matrix->elements[row1][i];
+    double temp = matrix->elements[row1][i];
     if (toNegate)
       temp = temp * (-1);
     matrix->elements[row1][i] = matrix->elements[row2][i];
@@ -54,9 +108,9 @@ Matrix *createMatrix(int row, int col)
   Matrix *matrix = malloc(sizeof(Matrix));
   matrix->row = row;
   matrix->col = col;
-  matrix->elements = malloc(sizeof(int *) * row);
+  matrix->elements = malloc(sizeof(double *) * row);
   for (int i = 0; i < row; i++)
-    matrix->elements[i] = malloc(sizeof(int) * col);
+    matrix->elements[i] = malloc(sizeof(double) * col);
   return matrix;
 }
 
@@ -126,7 +180,7 @@ void printMatrix(Matrix *matrix)
   printf("r/c | ");
   for (int i = 0; i < col; i++)
   {
-    printf("%-5d", i);
+    printf("%-7d", i);
     if (i != (col - 1))
     {
       printf(" | ");
@@ -135,7 +189,7 @@ void printMatrix(Matrix *matrix)
   printf("\n");
 
   // print header divider
-  int dividerLength = strlen("r/c | ") + (5 + strlen(" | ")) * col;
+  int dividerLength = strlen("r/c | ") + (7 + strlen(" | ")) * col;
   for (int i = 0; i < dividerLength; i++)
   {
     printf("-");
@@ -148,7 +202,8 @@ void printMatrix(Matrix *matrix)
     printf("%-3d | ", i);
     for (int j = 0; j < col; j++)
     {
-      printf("%-5d", matrix->elements[i][j]);
+      double element = matrix->elements[i][j];
+      printf("%-7.1lf", (element == 0) ? abs(element) : element);
       if (j != (col - 1))
       {
         printf(" | ");
