@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct Matrix
 {
@@ -15,15 +16,38 @@ void loadMatrix(Matrix *matrix, const char data[]);
 void printMatrix(Matrix *matrix);
 void freeMatrix(Matrix *matrix);
 
+void swapRowsMatrix(Matrix *matrix, int row1, int row2);
+
 int main()
 {
 
   Matrix *matrix = createMatrix(4, 4);
   loadMatrix(matrix, "0, 1, 2, 3\n2, 2, 3, 4\n3, 4, 2, 4\n5, 1, 0, 3");
+  swapRowsMatrix(matrix, 0, 1);
   printMatrix(matrix);
   freeMatrix(matrix);
   return 0;
 }
+
+void swapRowsMatrix(Matrix *matrix, int row1, int row2)
+{
+  if (row1 < 0 || row1 >= matrix->row)
+    return;
+  if (row2 < 0 || row2 >= matrix->row)
+    return;
+
+  bool toNegate = (row1 - row2) % 2 != 0;
+  for (int i = 0; i < matrix->col; i++)
+  {
+    int temp = matrix->elements[row1][i];
+    if (toNegate)
+      temp = temp * (-1);
+    matrix->elements[row1][i] = matrix->elements[row2][i];
+    matrix->elements[row2][i] = temp;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 Matrix *createMatrix(int row, int col)
 {
