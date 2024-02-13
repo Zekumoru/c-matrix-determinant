@@ -14,6 +14,7 @@ typedef struct Matrix
 
 Matrix *createMatrix(int row, int col);
 void loadMatrix(Matrix *matrix, const char data[]);
+Matrix *duplicateMatrix(Matrix *matrix);
 void printMatrix(Matrix *matrix);
 void freeMatrix(Matrix *matrix);
 
@@ -38,10 +39,14 @@ double determinantMatrix(Matrix *matrix)
   if (matrix->row != matrix->col)
     return NAN;
 
-  rowEchelonMatrix(matrix);
+  Matrix *tempMatrix = duplicateMatrix(matrix);
+  rowEchelonMatrix(tempMatrix);
+
   double determinant = 1;
-  for (int i = 0; i < matrix->row; i++)
-    determinant *= matrix->elements[i][i];
+  for (int i = 0; i < tempMatrix->row; i++)
+    determinant *= tempMatrix->elements[i][i];
+
+  freeMatrix(tempMatrix);
   return determinant;
 }
 
@@ -169,6 +174,15 @@ void loadMatrix(Matrix *matrix, const char data[])
   for (char **pline = lines; (*pline) != NULL; pline++)
     free(*pline);
   free(lines);
+}
+
+Matrix *duplicateMatrix(Matrix *matrix)
+{
+  Matrix *dupMatrix = createMatrix(matrix->row, matrix->col);
+  for (int i = 0; i < matrix->row; i++)
+    for (int j = 0; j < matrix->col; j++)
+      dupMatrix->elements[i][j] = matrix->elements[i][j];
+  return dupMatrix;
 }
 
 void printMatrix(Matrix *matrix)
